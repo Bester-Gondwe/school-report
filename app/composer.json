@@ -1,0 +1,6 @@
+{
+    "require": {
+        "tecnickcom/tcpdf": "^6.8",
+        "wireui/wireui": "^2.4"
+    }
+}
