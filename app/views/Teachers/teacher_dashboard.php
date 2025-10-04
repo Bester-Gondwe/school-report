@@ -414,30 +414,38 @@ try {
 
 <body class="bg-gradient-to-br from-blue-50 to-green-100 min-h-screen">
     <!-- Fixed Sidebar -->
-    <aside class="fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-green-700 to-green-500 text-white p-6 shadow-2xl flex flex-col justify-between z-40 rounded-r-3xl">
+    <aside class="fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-blue-700 to-blue-500 text-white p-6 shadow-2xl flex flex-col justify-between z-40 rounded-r-3xl">
         <div>
             <div class="flex items-center gap-3 mb-8">
                 <span class="bg-white rounded-full p-2 shadow">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6.75m0-6.75l6.16-3.422A12.042 12.042 0 0112 12.75a12.042 12.042 0 01-6.16-2.172L12 14z" />
                     </svg>
                 </span>
-                <span class="text-2xl font-extrabold tracking-wide">AcademiaPro</span>
+                <span class="text-2xl font-extrabold tracking-wide">Teacher Panel</span>
             </div>
             <nav class="space-y-3">
-                <a href="#" data-target="register_student" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-green-800 hover:text-yellow-300 transition text-lg font-medium">
+                <a href="#" data-target="dashboard_overview" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 hover:text-yellow-300 transition text-lg font-medium">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    Dashboard
+                </a>
+                <a href="#" data-target="register_student" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 hover:text-yellow-300 transition text-lg font-medium">
                     <i class="fa-solid fa-user-plus"></i>
                     Register Student
                 </a>
-                <a href="#" data-target="input_marks" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-green-800 hover:text-yellow-300 transition text-lg font-medium">
+                <a href="#" data-target="input_marks" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 hover:text-yellow-300 transition text-lg font-medium">
                     <i class="fa-solid fa-pen-to-square"></i>
                     Input Marks
                 </a>
-                <a href="#" data-target="view_students" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-green-800 hover:text-yellow-300 transition text-lg font-medium">
+                <a href="#" data-target="view_students" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 hover:text-yellow-300 transition text-lg font-medium">
                     <i class="fa-solid fa-users"></i>
                     View Students
                 </a>
-                <a href="#" data-target="settings" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-green-800 hover:text-yellow-300 transition text-lg font-medium">
+                <a href="#" data-target="reports" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 hover:text-yellow-300 transition text-lg font-medium">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    Reports
+                </a>
+                <a href="#" data-target="settings" class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 hover:text-yellow-300 transition text-lg font-medium">
                     <i class="fa-solid fa-gear"></i>
                     Settings
                 </a>
@@ -454,17 +462,109 @@ try {
     <!-- Main Content (with left margin for sidebar) -->
     <div class="flex-1 p-8 ml-72">
         <!-- Welcome Header with Dynamic Greeting -->
-        <header class="bg-white/90 shadow-lg rounded-xl mb-8 flex items-center gap-4 px-6 py-5 border border-green-200">
+        <header class="bg-white/90 shadow-lg rounded-xl mb-8 flex items-center gap-4 px-6 py-5 border border-blue-200">
             <span class="text-3xl">
                 <?= $greeting_icon ?>
             </span>
             <div>
-                <h2 class="text-2xl font-bold text-green-800">
-                    <?= $greeting ?>, <span class="text-green-600"><?= htmlspecialchars($name) ?></span>!
+                <h2 class="text-2xl font-bold text-blue-800">
+                    <?= $greeting ?>, <span class="text-blue-600"><?= htmlspecialchars($name) ?></span>!
                 </h2>
-                <p class="text-gray-500 text-sm mt-1">Empowering academic excellence</p>
+                <p class="text-gray-500 text-sm mt-1">Teacher Dashboard - Manage your students and grades</p>
             </div>
         </header>
+
+        <!-- Dashboard Overview -->
+        <section id="dashboard_overview" class="content-section">
+            <h3 class="text-2xl font-semibold mb-6 text-gray-800">Dashboard Overview</h3>
+            
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Students</p>
+                            <p class="text-3xl font-bold text-blue-600"><?= count($students) ?></p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-user-graduate text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Subjects</p>
+                            <p class="text-3xl font-bold text-green-600"><?= count($subjects) ?></p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i class="fas fa-book text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Marks Entered</p>
+                            <p class="text-3xl font-bold text-purple-600"><?= count($rankingSummary) ?></p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Active Classes</p>
+                            <p class="text-3xl font-bold text-orange-600"><?= count($studentsGrouped) ?></p>
+                        </div>
+                        <div class="bg-orange-100 p-3 rounded-full">
+                            <i class="fas fa-chalkboard text-orange-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">Quick Actions</h4>
+                    <div class="space-y-3">
+                        <button onclick="showSection('register_student')" class="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+                            <i class="fas fa-user-plus text-blue-600 mr-3"></i>Register New Student
+                        </button>
+                        <button onclick="showSection('input_marks')" class="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
+                            <i class="fas fa-pen-to-square text-green-600 mr-3"></i>Input Marks
+                        </button>
+                        <button onclick="showSection('view_students')" class="w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
+                            <i class="fas fa-users text-purple-600 mr-3"></i>View All Students
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">Recent Activity</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center p-2 bg-gray-50 rounded">
+                            <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                            <span class="text-sm">Dashboard loaded successfully</span>
+                        </div>
+                        <div class="flex items-center p-2 bg-gray-50 rounded">
+                            <i class="fas fa-users text-green-500 mr-3"></i>
+                            <span class="text-sm"><?= count($students) ?> students in system</span>
+                        </div>
+                        <div class="flex items-center p-2 bg-gray-50 rounded">
+                            <i class="fas fa-book text-purple-500 mr-3"></i>
+                            <span class="text-sm"><?= count($subjects) ?> subjects available</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         <!-- Register Student -->
         <section id="register_student" class="content-section hidden">
             <h3 class="text-2xl font-semibold mb-4">Register New Student</h3>
@@ -741,6 +841,45 @@ try {
                 </div>
             </div>
         </section>
+
+        <!-- Reports Section -->
+        <section id="reports" class="content-section hidden">
+            <h3 class="text-2xl font-semibold mb-6 text-gray-800">Reports & Analytics</h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">Student Performance</h4>
+                    <p class="text-gray-600 mb-4">Generate reports on student performance and rankings</p>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+                            <i class="fas fa-chart-line text-blue-600 mr-3"></i>Performance Report
+                        </button>
+                        <button class="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
+                            <i class="fas fa-trophy text-green-600 mr-3"></i>Rankings Report
+                        </button>
+                        <button class="w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
+                            <i class="fas fa-graduation-cap text-purple-600 mr-3"></i>Grade Distribution
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-800">Export Options</h4>
+                    <p class="text-gray-600 mb-4">Export data in various formats</p>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition">
+                            <i class="fas fa-file-excel text-orange-600 mr-3"></i>Export to Excel
+                        </button>
+                        <button class="w-full text-left p-3 bg-red-50 hover:bg-red-100 rounded-lg transition">
+                            <i class="fas fa-file-pdf text-red-600 mr-3"></i>Export to PDF
+                        </button>
+                        <button class="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
+                            <i class="fas fa-file-csv text-gray-600 mr-3"></i>Export to CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
     <script>
         // Sidebar link behavior
@@ -748,15 +887,17 @@ try {
             link.addEventListener('click', e => {
                 e.preventDefault();
                 const target = link.getAttribute('data-target');
-                document.querySelectorAll('.content-section').forEach(section => section.classList.add('hidden'));
-                document.getElementById(target)?.classList.remove('hidden');
-                // If bulk input marks section is shown, trigger fetch
-                if (target === 'bulk_input_marks') {
-                    document.getElementById('bulk_marks_table_container').innerHTML = 'Please select a grade and term to load students for bulk marks entry.';
-                    document.getElementById('bulk_input_marks_form').classList.add('hidden');
-                }
+                showSection(target);
             });
         });
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId)?.classList.remove('hidden');
+        }
+
         // Show first section by default
         window.addEventListener('DOMContentLoaded', () => {
             const firstSection = document.querySelector('.content-section');

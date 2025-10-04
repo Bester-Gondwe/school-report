@@ -4,59 +4,42 @@ use App\Config\Database;
 
 session_start();
 $error_message = "";
+$success_message = "";
 
+// Check if registration is allowed (students only)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $role = $_POST['role'];
     $db = (new Database())->getConnection();
     $name = trim($_POST['name']);
-    if ($role === 'teacher') {
-        $email = trim($_POST['email']);
-        $password = trim($_POST['password']);
-        try {
-            $checkTeacher = $db->prepare("SELECT id FROM users WHERE email = :email AND role = 'teacher'");
-            $checkTeacher->execute([':email' => $email]);
-            if ($checkTeacher->rowCount() > 0) {
-                $error_message = "Teacher with this email already exists.";
-            } else {
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $db->prepare("INSERT INTO users (name, email, password, role) VALUES (:name, :email, :password, 'teacher')");
-                $stmt->execute([
-                    ':name' => $name,
-                    ':email' => $email,
-                    ':password' => $hashed_password
-                ]);
-                header('Location: login.php?registered=1');
-                exit();
-            }
-        } catch (PDOException $e) {
-            $error_message = "Registration failed: " . $e->getMessage();
+    $examination_number = trim($_POST['examination_number']);
+    $grade = trim($_POST['grade']);
+    $term = trim($_POST['term']);
+    $gender = trim($_POST['gender']);
+    $password = $examination_number; // Password is the examination number
+    
+    try {
+        // Check if student already exists
+        $checkStudent = $db->prepare("SELECT id FROM users WHERE examination_number = :examination_number AND role = 'student'");
+        $checkStudent->execute([':examination_number' => $examination_number]);
+        if ($checkStudent->rowCount() > 0) {
+            $error_message = "Student with this examination number already exists.";
+        } else {
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $db->prepare("INSERT INTO users (name, examination_number, password, role, grade, term, gender, status) VALUES (:name, :examination_number, :password, 'student', :grade, :term, :gender, 'active')");
+            $stmt->execute([
+                ':name' => $name,
+                ':examination_number' => $examination_number,
+                ':password' => $hashed_password,
+                ':grade' => $grade,
+                ':term' => $term,
+                ':gender' => $gender
+            ]);
+            $success_message = "Registration successful! You can now login with your examination number.";
+            // Redirect to login after successful registration
+            header('Location: login.php?registered=1&success=1');
+            exit();
         }
-    } else {
-        $examination_number = trim($_POST['examination_number']);
-        $grade = trim($_POST['grade']);
-        $term = trim($_POST['term']);
-        $password = $examination_number; // Password is the examination number
-        try {
-            $checkStudent = $db->prepare("SELECT id FROM users WHERE examination_number = :examination_number AND role = 'student'");
-            $checkStudent->execute([':examination_number' => $examination_number]);
-            if ($checkStudent->rowCount() > 0) {
-                $error_message = "Student with this examination number already exists.";
-            } else {
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $db->prepare("INSERT INTO users (name, examination_number, password, role, grade, term) VALUES (:name, :examination_number, :password, 'student', :grade, :term)");
-                $stmt->execute([
-                    ':name' => $name,
-                    ':examination_number' => $examination_number,
-                    ':password' => $hashed_password,
-                    ':grade' => $grade,
-                    ':term' => $term
-                ]);
-                header('Location: login.php?registered=1');
-                exit();
-            }
-        } catch (PDOException $e) {
-            $error_message = "Registration failed: " . $e->getMessage();
-        }
+    } catch (PDOException $e) {
+        $error_message = "Registration failed: " . $e->getMessage();
     }
 }
 ?>
@@ -65,93 +48,133 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>Student Registration - School Report System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 </head>
-<body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-green-100">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg">
-        <h2 class="text-3xl font-extrabold text-center text-blue-700 mb-6">Register</h2>
-        <?php if (!empty($error_message)): ?>
-            <p class="text-red-600 text-center mb-4 font-semibold"><?php echo htmlspecialchars($error_message); ?></p>
-        <?php endif; ?>
-        <form action="" method="POST" class="space-y-4" id="registerForm">
-            <div>
-                <label for="role" class="block text-gray-700 font-semibold mb-1">Role</label>
-                <select id="role" name="role" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" onchange="toggleRoleFields()">
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
-                </select>
+<body class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+    <div class="w-full max-w-lg">
+        <!-- Logo and Title -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-600 to-blue-600 rounded-full mb-4 shadow-lg">
+                <i class="fas fa-user-plus text-white text-3xl"></i>
             </div>
-            <div>
-                <label for="name" class="block text-gray-700 font-semibold mb-1">Full Name</label>
-                <input type="text" id="name" name="name" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Enter your full name">
-            </div>
-            <div id="studentFields">
-                <div>
-                    <label for="examination_number" class="block text-gray-700 font-semibold mb-1">Examination Number</label>
-                    <input type="text" id="examination_number" name="examination_number" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Enter your examination number">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Student Registration</h1>
+            <p class="text-gray-600">Create your student account to access your academic records</p>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <?php if (!empty($error_message)): ?>
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <?php echo htmlspecialchars($error_message); ?>
                 </div>
-                <div class="flex gap-2">
-                    <div class="w-1/2">
-                        <label for="grade" class="block text-gray-700 font-semibold mb-1">Grade</label>
-                        <select id="grade" name="grade" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-                            <option value="Form One">Form One</option>
-                            <option value="Form Two">Form Two</option>
-                            <option value="Form Three">Form Three</option>
-                            <option value="Form Four">Form Four</option>
-                            <option value="Form Five">Form Five</option>
+            <?php endif; ?>
+
+            <?php if (!empty($success_message)): ?>
+                <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <?php echo htmlspecialchars($success_message); ?>
+                </div>
+            <?php endif; ?>
+
+            <form action="" method="POST" class="space-y-6">
+                <!-- Full Name -->
+                <div>
+                    <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2 text-green-500"></i>Full Name
+                    </label>
+                    <input type="text" id="name" name="name" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                           placeholder="Enter your full name">
+                </div>
+
+                <!-- Examination Number -->
+                <div>
+                    <label for="examination_number" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-id-card mr-2 text-green-500"></i>Examination Number
+                    </label>
+                    <input type="text" id="examination_number" name="examination_number" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                           placeholder="Enter your examination number">
+                    <p class="text-xs text-gray-500 mt-1">This will be used as your login password</p>
+                </div>
+
+                <!-- Grade and Term -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="grade" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-graduation-cap mr-2 text-green-500"></i>Grade
+                        </label>
+                        <select id="grade" name="grade" required 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200">
+                            <option value="">Select Grade</option>
+                            <option value="1">Form One</option>
+                            <option value="2">Form Two</option>
+                            <option value="3">Form Three</option>
+                            <option value="4">Form Four</option>
                         </select>
                     </div>
-                    <div class="w-1/2">
-                        <label for="term" class="block text-gray-700 font-semibold mb-1">Term</label>
-                        <select id="term" name="term" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-                            <option value="Term One">Term One</option>
-                            <option value="Term Two">Term Two</option>
-                            <option value="Term Three">Term Three</option>
+                    <div>
+                        <label for="term" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-calendar mr-2 text-green-500"></i>Term
+                        </label>
+                        <select id="term" name="term" required 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200">
+                            <option value="">Select Term</option>
+                            <option value="1">Term One</option>
+                            <option value="2">Term Two</option>
+                            <option value="3">Term Three</option>
                         </select>
                     </div>
                 </div>
-                <div class="text-xs text-gray-500 mt-1">Your password will be your examination number.</div>
-            </div>
-            <div id="teacherFields" style="display:none;">
+
+                <!-- Gender -->
                 <div>
-                    <label for="email" class="block text-gray-700 font-semibold mb-1">Email</label>
-                    <input type="email" id="email" name="email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Enter your email">
+                    <label for="gender" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-venus-mars mr-2 text-green-500"></i>Gender
+                    </label>
+                    <select id="gender" name="gender" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
                 </div>
-                <div>
-                    <label for="password" class="block text-gray-700 font-semibold mb-1">Password</label>
-                    <input type="password" id="password" name="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Enter your password">
+
+                <!-- Register Button -->
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                    <i class="fas fa-user-plus mr-2"></i>Register as Student
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600">Already have an account? 
+                    <a href="login.php" class="text-green-600 hover:text-green-800 font-semibold transition-colors duration-200">
+                        Sign In Here
+                    </a>
+                </p>
+            </div>
+
+            <!-- Notice -->
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                    <div class="text-sm text-blue-700">
+                        <p class="font-semibold mb-1">Registration Notice:</p>
+                        <p>Only students can register here. Teachers and administrators are preloaded in the system.</p>
+                    </div>
                 </div>
             </div>
-            <button type="submit" class="w-full bg-gradient-to-r from-green-400 via-blue-400 to-green-600 hover:from-green-500 hover:to-blue-700 text-white font-bold py-2 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50">Register</button>
-            <p class="text-center text-gray-600 mt-4">Already have an account? <a href="login.php" class="text-blue-500 hover:underline">Login here</a></p>
-        </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-500 text-sm">
+            <p>&copy; <?= date('Y') ?> School Report System. All rights reserved.</p>
+        </div>
     </div>
-    <script>
-    function toggleRoleFields() {
-        var role = document.getElementById('role').value;
-        var studentFields = document.getElementById('studentFields');
-        var teacherFields = document.getElementById('teacherFields');
-        if (role === 'teacher') {
-            studentFields.style.display = 'none';
-            teacherFields.style.display = 'block';
-            document.getElementById('examination_number').required = false;
-            document.getElementById('grade').required = false;
-            document.getElementById('term').required = false;
-            document.getElementById('email').required = true;
-            document.getElementById('password').required = true;
-        } else {
-            studentFields.style.display = 'block';
-            teacherFields.style.display = 'none';
-            document.getElementById('examination_number').required = true;
-            document.getElementById('grade').required = true;
-            document.getElementById('term').required = true;
-            document.getElementById('email').required = false;
-            document.getElementById('password').required = false;
-        }
-    }
-    document.getElementById('role').addEventListener('change', toggleRoleFields);
-    window.onload = toggleRoleFields;
-    </script>
 </body>
 </html>
