@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../config/Database.php';
+require_once __DIR__ . '/../../Config/Database.php';
 use App\Config\Database;
 
 session_start();
@@ -24,7 +24,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $password_to_check = $registration_number;
     }
     try {
+        if ($role === 'admin' || $role === 'teacher') {
+            $stmt->execute([':identifier' => $identifier, ':role' => $role]);
+        } else {
         $stmt->execute([':identifier' => $identifier]);
+        }
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($user && ($role === 'admin' || $role === 'teacher') && password_verify($password_to_check, $user['password'])) {
             session_regenerate_id(true);
@@ -36,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($role === 'admin') {
                 header("Location: ../Admin/admin_dashboard.php");
             } else {
-                header("Location: ../Teachers/teacher_dashboard.php");
+            header("Location: ../Teachers/teacher_dashboard.php");
             }
             exit();
         } elseif ($user && $role === 'student' && $password_to_check === $user['examination_number']) {
@@ -50,7 +54,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $error_message = "Invalid credentials!";
         }
     } catch (PDOException $e) {
-        die("Login failed: " . $e->getMessage());
+        error_log("Login failed: " . $e->getMessage());
+        $error_message = "Database error occurred. Please try again.";
     }
 }
 ?>
@@ -76,12 +81,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <!-- Login Form -->
         <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <?php if (!empty($error_message)): ?>
+        <?php if (!empty($error_message)): ?>
                 <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
                     <i class="fas fa-exclamation-circle mr-2"></i>
                     <?php echo htmlspecialchars($error_message); ?>
                 </div>
-            <?php endif; ?>
+        <?php endif; ?>
 
             <form action="" method="POST" id="login-form" class="space-y-6">
                 <!-- Role Selection -->
@@ -90,15 +95,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <i class="fas fa-user-tag mr-2 text-blue-500"></i>Select Role
                     </label>
                     <select id="role" name="role" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white">
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
                         <option value="admin">Administrator</option>
-                    </select>
-                </div>
+                </select>
+            </div>
 
                 <!-- Dynamic Fields -->
                 <div id="identifier-field">
-                    <!-- Default to student fields -->
+                <!-- Default to student fields -->
                     <label id="identifier-label" for="student_name" class="block text-sm font-semibold text-gray-700 mb-2">
                         <i class="fas fa-user mr-2 text-blue-500"></i>Student Name
                     </label>
@@ -136,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- Footer -->
         <div class="text-center mt-8 text-gray-500 text-sm">
             <p>&copy; <?= date('Y') ?> School Report System. All rights reserved.</p>
-        </div>
+            </div>
     </div>
     <script>
     function toggleIdentifierField() {

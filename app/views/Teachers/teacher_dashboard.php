@@ -128,41 +128,74 @@ try {
     ) {
         $student_id = $_POST['student_id'];
         $marks = $_POST['marks'];
-        // Fetch the student's current grade and term
-        $stmt = $db->prepare('SELECT grade, term FROM users WHERE id = :id');
-        $stmt->bindParam(':id', $student_id);
-        $stmt->execute();
-        $student_info = $stmt->fetch(PDO::FETCH_ASSOC);
-        $grade = $student_info['grade'];
-        $term = $student_info['term'];
+        $validation_errors = [];
+        
+        // Validate marks
         foreach ($marks as $subject_id => $mark) {
-            // Check if a mark already exists for this student, subject, grade, and term
-            $checkStmt = $db->prepare("SELECT id FROM marks WHERE student_id = :student_id AND subject_id = :subject_id AND grade = :grade AND term = :term");
-            $checkStmt->bindParam(':student_id', $student_id);
-            $checkStmt->bindParam(':subject_id', $subject_id);
-            $checkStmt->bindParam(':grade', $grade);
-            $checkStmt->bindParam(':term', $term);
-            $checkStmt->execute();
-            $existingMark = $checkStmt->fetch(PDO::FETCH_ASSOC);
-            if ($existingMark) {
-                // Update the existing mark
-                $updateStmt = $db->prepare("UPDATE marks SET marks_obtained = :mark WHERE id = :id");
-                $updateStmt->bindParam(':mark', $mark);
-                $updateStmt->bindParam(':id', $existingMark['id']);
-                $updateStmt->execute();
-            } else {
-                // Insert new mark
-                $insertStmt = $db->prepare("INSERT INTO marks (student_id, subject_id, marks_obtained, grade, term) VALUES (:student_id, :subject_id, :mark, :grade, :term)");
-                $insertStmt->bindParam(':student_id', $student_id);
-                $insertStmt->bindParam(':subject_id', $subject_id);
-                $insertStmt->bindParam(':mark', $mark);
-                $insertStmt->bindParam(':grade', $grade);
-                $insertStmt->bindParam(':term', $term);
-                $insertStmt->execute();
+            $mark = floatval($mark);
+            
+            // Check for negative values
+            if ($mark < 0) {
+                $validation_errors[] = "Marks cannot be negative for subject ID: $subject_id";
+            }
+            
+            // Check for values over 100
+            if ($mark > 100) {
+                $validation_errors[] = "Marks cannot exceed 100% for subject ID: $subject_id";
+            }
+            
+            // Check for more than 2 decimal places
+            if (round($mark, 2) != $mark) {
+                $validation_errors[] = "Maximum 2 decimal places allowed for subject ID: $subject_id";
             }
         }
-        // Show success message after reload
-        $_SESSION['marks_input_message'] = '<span class="text-green-600">Marks submitted successfully!</span>';
+        
+        // If validation passes, proceed with database operations
+        if (empty($validation_errors)) {
+            // Fetch the student's current grade and term
+            $stmt = $db->prepare('SELECT grade, term FROM users WHERE id = :id');
+            $stmt->bindParam(':id', $student_id);
+            $stmt->execute();
+            $student_info = $stmt->fetch(PDO::FETCH_ASSOC);
+            $grade = $student_info['grade'];
+            $term = $student_info['term'];
+            
+            foreach ($marks as $subject_id => $mark) {
+                $mark = round(floatval($mark), 2); // Ensure 2 decimal places
+                
+                // Check if a mark already exists for this student, subject, grade, and term
+                $checkStmt = $db->prepare("SELECT id FROM marks WHERE student_id = :student_id AND subject_id = :subject_id AND grade = :grade AND term = :term");
+                $checkStmt->bindParam(':student_id', $student_id);
+                $checkStmt->bindParam(':subject_id', $subject_id);
+                $checkStmt->bindParam(':grade', $grade);
+                $checkStmt->bindParam(':term', $term);
+                $checkStmt->execute();
+                $existingMark = $checkStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($existingMark) {
+                    // Update the existing mark
+                    $updateStmt = $db->prepare("UPDATE marks SET marks_obtained = :mark WHERE id = :id");
+                    $updateStmt->bindParam(':mark', $mark);
+                    $updateStmt->bindParam(':id', $existingMark['id']);
+                    $updateStmt->execute();
+                } else {
+                    // Insert new mark
+                    $insertStmt = $db->prepare("INSERT INTO marks (student_id, subject_id, marks_obtained, grade, term) VALUES (:student_id, :subject_id, :mark, :grade, :term)");
+                    $insertStmt->bindParam(':student_id', $student_id);
+                    $insertStmt->bindParam(':subject_id', $subject_id);
+                    $insertStmt->bindParam(':mark', $mark);
+                    $insertStmt->bindParam(':grade', $grade);
+                    $insertStmt->bindParam(':term', $term);
+                    $insertStmt->execute();
+                }
+            }
+            // Show success message after reload
+            $_SESSION['marks_input_message'] = '<span class="text-green-600">Marks submitted successfully!</span>';
+        } else {
+            // Show validation errors
+            $_SESSION['marks_input_message'] = '<span class="text-red-600">Validation errors: ' . implode(', ', $validation_errors) . '</span>';
+        }
+        
         header('Location: ' . $_SERVER['PHP_SELF'] . '#input_marks');
         exit();
     }
@@ -620,11 +653,37 @@ try {
                 </div>
                 <!-- Input for Marks -->
                 <h3 class="text-xl font-semibold mb-2">Enter The Grades</h3>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                        <div class="text-sm text-blue-700">
+                            <p class="font-semibold mb-1">Marks Entry Guidelines:</p>
+                            <ul class="list-disc ml-4 space-y-1">
+                                <li>Enter marks from 0 to 100 only</li>
+                                <li>Maximum 2 decimal places allowed</li>
+                                <li>No negative values permitted</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <?php foreach ($subjects as $sub): ?>
                         <div>
-                            <label class="block text-gray-700 font-medium"><?= htmlspecialchars($sub['name']) ?></label>
-                            <input type="number" name="marks[<?= $sub['id'] ?>]" class="w-full p-2 border rounded mark-input" required data-subject="<?= htmlspecialchars($sub['name']) ?>">
+                            <label class="block text-gray-700 font-medium mb-1"><?= htmlspecialchars($sub['name']) ?></label>
+                            <div class="relative">
+                                <input type="number" 
+                                       name="marks[<?= $sub['id'] ?>]" 
+                                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mark-input" 
+                                       required 
+                                       data-subject="<?= htmlspecialchars($sub['name']) ?>"
+                                       min="0" 
+                                       max="100" 
+                                       step="0.01"
+                                       placeholder="0.00"
+                                       oninput="validateMarkInput(this)">
+                                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">%</span>
+                            </div>
+                            <div class="text-xs text-red-500 mt-1 validation-error" style="display: none;"></div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -897,6 +956,71 @@ try {
             });
             document.getElementById(sectionId)?.classList.remove('hidden');
         }
+
+        // Mark input validation function
+        function validateMarkInput(input) {
+            const value = parseFloat(input.value);
+            const errorDiv = input.parentElement.nextElementSibling;
+            
+            // Clear previous errors
+            errorDiv.style.display = 'none';
+            input.classList.remove('border-red-500');
+            input.classList.add('border-gray-300');
+            
+            if (isNaN(value)) {
+                return true; // Allow empty values for now
+            }
+            
+            // Check for negative values
+            if (value < 0) {
+                showValidationError(input, errorDiv, 'Marks cannot be negative');
+                return false;
+            }
+            
+            // Check for values over 100
+            if (value > 100) {
+                showValidationError(input, errorDiv, 'Marks cannot exceed 100%');
+                return false;
+            }
+            
+            // Check for more than 2 decimal places
+            const decimalPlaces = (input.value.split('.')[1] || '').length;
+            if (decimalPlaces > 2) {
+                showValidationError(input, errorDiv, 'Maximum 2 decimal places allowed');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function showValidationError(input, errorDiv, message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            input.classList.remove('border-gray-300');
+            input.classList.add('border-red-500');
+        }
+        
+        // Form submission validation
+        function validateMarksForm() {
+            const markInputs = document.querySelectorAll('.mark-input');
+            let isValid = true;
+            
+            markInputs.forEach(input => {
+                if (!validateMarkInput(input)) {
+                    isValid = false;
+                }
+            });
+            
+            return isValid;
+        }
+        
+        // Add form validation on submit
+        document.getElementById('marks_input_form')?.addEventListener('submit', function(e) {
+            if (!validateMarksForm()) {
+                e.preventDefault();
+                alert('Please fix the validation errors before submitting.');
+            }
+        });
 
         // Show first section by default
         window.addEventListener('DOMContentLoaded', () => {

@@ -146,21 +146,7 @@ try {
         });
     </script>
 </head>
-<body class="bg-gradient-to-br from-blue-100 to-purple-200 min-h-screen">
-
-    <!-- Top Navbar -->
-    <nav class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex items-center justify-between px-8 z-50">
-        <div class="flex items-center gap-3">
-            <img src="/app/uploads/default_logo.png" alt="Logo" class="h-10 w-10 rounded-full border border-gray-300 bg-gray-200">
-            <span class="text-xl font-bold text-gray-700">Student Dashboard</span>
-        </div>
-        <div class="flex items-center gap-6">
-            <span class="text-gray-600 font-semibold hidden md:inline">Welcome, <span class="text-blue-500"><?= htmlspecialchars($student_name) ?></span></span>
-            <a href="../Auth/logout.php" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow flex items-center gap-2 transition">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </div>
-    </nav>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
 
     <!-- Fixed Sidebar -->
     <aside class="fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-green-700 to-green-500 text-white p-6 shadow-2xl flex flex-col justify-between z-40 rounded-r-3xl">
@@ -203,15 +189,26 @@ try {
     <!-- Main Content -->
     <div class="flex-1 p-8 ml-72">
         <!-- Welcome Header -->
-        <header class="bg-white/90 shadow-lg rounded-xl mb-8 flex items-center gap-4 px-6 py-5 border border-green-200">
-            <span class="text-3xl">
-                <i class="fas fa-sun text-yellow-400"></i>
-            </span>
-            <div>
-                <h2 class="text-2xl font-bold text-green-800">
-                    <span id="greeting">Good morning</span>, <span class="text-green-600"><?= htmlspecialchars($student_name) ?></span>!
-                </h2>
-                <p class="text-gray-500 text-sm mt-1">Student Dashboard - Track your academic progress</p>
+        <header class="bg-white/90 shadow-lg rounded-xl mb-8 flex items-center justify-between px-6 py-5 border border-green-200">
+            <div class="flex items-center gap-4">
+                <span class="text-3xl">
+                    <i class="fas fa-sun text-yellow-400"></i>
+                </span>
+                <div>
+                    <h2 class="text-2xl font-bold text-green-800">
+                        <span id="greeting">Good morning</span>, <span class="text-green-600"><?= htmlspecialchars($student_name) ?></span>!
+                    </h2>
+                    <p class="text-gray-500 text-sm mt-1">Student Dashboard - Track your academic progress</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-600 font-semibold hidden md:inline">
+                    <i class="fas fa-user-graduate text-green-600 mr-2"></i>
+                    <?= htmlspecialchars($normalized_grade) ?> | <?= htmlspecialchars($normalized_term) ?>
+                </span>
+                <a href="../Auth/logout.php" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
             </div>
         </header>
 
@@ -310,69 +307,131 @@ try {
         <!-- Academic Performance -->
         <section id="academic_performance" class="content-section hidden">
             <h3 class="text-2xl font-semibold mb-6 text-gray-800">Academic Performance</h3>
-            <!-- Academic Graph Card -->
-            <div class="mt-8">
-                <div class="bg-gradient-to-r from-purple-200 to-blue-200 rounded-lg p-6 shadow-lg">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-2xl font-bold text-gray-700 flex items-center gap-2"><i class="fas fa-chart-bar text-purple-500"></i> Academic Graph</h3>
-                        <span class="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow ml-2">Grade: <?= htmlspecialchars($normalized_grade) ?> | Term: <?= htmlspecialchars($normalized_term) ?></span>
+            
+            <?php if (!empty($marks)) : ?>
+                <!-- Performance Chart -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h4 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-green-500"></i> Performance Chart
+                        </h4>
+                        <span class="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
+                            <?= htmlspecialchars($normalized_grade) ?> | <?= htmlspecialchars($normalized_term) ?>
+                        </span>
                     </div>
-                    <canvas id="marksChart" height="120"></canvas>
-
-                    <!-- Marks Table and Ranking Info (inside the card) -->
-                    <div class="mt-8">
-                        <?php if (!empty($marks)) : ?>
-                            <h3 class="text-lg font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="fas fa-table text-blue-500"></i> Marks Table</h3>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full bg-white rounded shadow">
-                                    <thead>
-                                        <tr>
-                                            <th class="px-4 py-2 border-b text-left">Subject</th>
-                                            <th class="px-4 py-2 border-b text-left">Marks Obtained</th>
-                                            <th class="px-4 py-2 border-b text-left">Grade</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($marks as $mark) : ?>
-                                            <tr>
-                                                <td class="px-4 py-2 border-b"><?= htmlspecialchars($mark['subject_name']) ?></td>
-                                                <td class="px-4 py-2 border-b"><?= htmlspecialchars($mark['marks_obtained']) ?></td>
-                                                <td class="px-4 py-2 border-b font-bold">
-                                                    <?php
-                                                        $gradeColor = match($mark['grade']) {
-                                                            'A' => 'text-green-600',
-                                                            'B' => 'text-blue-600',
-                                                            'C' => 'text-yellow-600',
-                                                            'D' => 'text-orange-600',
-                                                            default => 'text-red-600',
-                                                        };
-                                                    ?>
-                                                    <span class="<?= $gradeColor ?>"><?= $mark['grade'] ?></span>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-4 flex flex-wrap gap-6">
-                                <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded shadow">
-                                    <strong>Average Marks:</strong> <?= htmlspecialchars($average_marks) ?>
-                                </div>
-                                <div class="bg-purple-100 text-purple-800 px-4 py-2 rounded shadow">
-                                    <strong>Rank:</strong> <?= htmlspecialchars($student_rank) ?> / <?= htmlspecialchars($total_students) ?>
-                                </div>
-                            </div>
-                        <?php else : ?>
-                            <div class="text-center text-gray-500 py-8">
-                                No marks data available for this grade and term.<br>
-                                <?php if ($missing_grade_or_term): ?>
-                                    <span class="text-red-500">Your grade or term information is missing. Please contact your teacher or admin.</span>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <canvas id="marksChart" height="120"></canvas>
                     </div>
                 </div>
-            </div>
+
+                <!-- Marks Table -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-table text-green-500"></i> Subject Marks
+                    </h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks Obtained</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <?php foreach ($marks as $mark) : ?>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <?= htmlspecialchars($mark['subject_name']) ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <?= htmlspecialchars($mark['marks_obtained']) ?>%
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php
+                                                $gradeColor = match($mark['grade']) {
+                                                    'A' => 'bg-green-100 text-green-800',
+                                                    'B' => 'bg-blue-100 text-blue-800',
+                                                    'C' => 'bg-yellow-100 text-yellow-800',
+                                                    'D' => 'bg-orange-100 text-orange-800',
+                                                    default => 'bg-red-100 text-red-800',
+                                                };
+                                            ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?= $gradeColor ?>">
+                                                <?= $mark['grade'] ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                                                    <div class="bg-green-500 h-2 rounded-full" style="width: <?= $mark['marks_obtained'] ?>%"></div>
+                                                </div>
+                                                <span class="text-xs text-gray-500"><?= $mark['marks_obtained'] ?>%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Performance Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Average Marks</p>
+                                <p class="text-3xl font-bold text-blue-600"><?= htmlspecialchars($average_marks) ?>%</p>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Current Rank</p>
+                                <p class="text-3xl font-bold text-purple-600"><?= htmlspecialchars($student_rank) ?></p>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <i class="fas fa-trophy text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Out of</p>
+                                <p class="text-3xl font-bold text-green-600"><?= htmlspecialchars($total_students) ?></p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-users text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php else : ?>
+                <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-chart-line text-6xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Academic Data Available</h3>
+                    <p class="text-gray-500 mb-4">No marks data available for your current grade and term.</p>
+                    <?php if ($missing_grade_or_term): ?>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+                            <p class="text-red-700">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Your grade or term information is missing. Please contact your teacher or administrator.
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </section>
 
         <!-- Settings Section -->
